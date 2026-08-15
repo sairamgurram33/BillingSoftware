@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useLogout } from '../contexts/LogoutContext';
 import { API_BASE_URL } from '../utils/apiConfig';
 import './Dashboard.css';
 
@@ -22,7 +21,6 @@ const Dashboard: React.FC = () => {
   });
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const { onLogout } = useLogout();
 
   useEffect(() => {
     fetchStats();
@@ -129,17 +127,6 @@ const Dashboard: React.FC = () => {
             </button>
           </div>
         </div>
-      </div>
-
-      {/* Logout Button - At the very bottom */}
-      <div className="dashboard-footer">
-        <button
-          className="logout-button"
-          onClick={onLogout}
-          title="Logout"
-        >
-          🚪 Logout
-        </button>
       </div>
     </div>
   );

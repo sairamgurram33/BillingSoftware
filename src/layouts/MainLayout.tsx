@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LogoutProvider } from '../contexts/LogoutContext';
+import { LogoutProvider, useLogout } from '../contexts/LogoutContext';
 import './MainLayout.css';
 
 interface MainLayoutProps {
@@ -8,6 +8,20 @@ interface MainLayoutProps {
   onLogout: () => void;
   children: React.ReactNode;
 }
+
+const SidebarLogoutButton: React.FC = () => {
+  const { onLogout } = useLogout();
+
+  return (
+    <button
+      className="logout-button"
+      onClick={onLogout}
+      title="Logout"
+    >
+      🚪 Logout
+    </button>
+  );
+};
 
 const MainLayout: React.FC<MainLayoutProps> = ({ user, onLogout, children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -69,6 +83,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ user, onLogout, children }) => 
               </div>
             )}
           </div>
+          <LogoutProvider onLogout={onLogout}>
+            <SidebarLogoutButton />
+          </LogoutProvider>
         </div>
       </aside>
 

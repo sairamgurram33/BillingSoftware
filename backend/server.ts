@@ -344,46 +344,38 @@ app.put('/api/products/:id', authenticate, async (req: Request, res: Response) =
 
 app.delete('/api/products/:id', authenticate, async (req: Request, res: Response) => {
   const connection = await pool.getConnection();
-  
+
   try {
     const { id } = req.params;
-    
-    // Check if product is referenced by billItems
-    const [billItems]: any = await connection.query(
-      'SELECT COUNT(*) as count FROM billItems WHERE productId = ?',
+
+    // Products are never physically deleted because existing bills
+    // may reference them through the billItems foreign key.
+    // Instead, mark the product as inactive (soft delete).
+    const [result]: any = await connection.query(
+      'UPDATE products SET isActive = FALSE WHERE id = ?',
       [id]
     );
 
-    const isReferenced = Number(billItems[0]?.count || 0) > 0;
-
-    if (isReferenced) {
-      // Soft delete: set isActive = FALSE
-      const [result]: any = await connection.query(
-        'UPDATE products SET isActive = FALSE WHERE id = ?',
+    if (result.affectedRows === 0) {
+      // The product may already be inactive. Check whether it exists.
+      const [products]: any = await connection.query(
+        'SELECT id FROM products WHERE id = ?',
         [id]
       );
 
-      if (result.affectedRows === 0) {
+      if (products.length === 0) {
         return res.status(404).json({ error: 'Product not found' });
       }
-
-      res.json({ message: 'Product marked as inactive (soft delete due to billing history)' });
-    } else {
-      // Hard delete: physically remove from database
-      const [result]: any = await connection.query(
-        'DELETE FROM products WHERE id = ?',
-        [id]
-      );
-
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ error: 'Product not found' });
-      }
-
-      res.json({ message: 'Product deleted' });
     }
+
+    res.json({
+      message: 'Product deleted successfully'
+    });
   } catch (error) {
     console.error('Delete product error:', error);
-    res.status(500).json({ error: 'Failed to delete product' });
+    res.status(500).json({
+      error: 'Failed to delete product'
+    });
   } finally {
     connection.release();
   }
@@ -667,4 +659,3 @@ console.log(`📍 Server running on port ${PORT}`);
 
 export default app;
 export { pool };
-

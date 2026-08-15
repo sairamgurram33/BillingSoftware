@@ -151,13 +151,15 @@
   padding: 16px;
   border-top: 2px solid #e9ecef;
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .user-info {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 12px;
   padding-bottom: 12px;
   border-bottom: 1px solid #e9ecef;
 }
@@ -201,7 +203,7 @@
   font-weight: 600;
 }
 
-.logout-button {
+.sidebar-footer .logout-button {
   width: 100%;
   padding: 10px 12px;
   background: #ecf0f1;
@@ -221,14 +223,14 @@
   box-shadow: none;
 }
 
-.logout-button:hover {
+.sidebar-footer .logout-button:hover {
   background: #d5dbdb;
   border-color: #95a5a6;
   transform: none;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
-.logout-button:active {
+.sidebar-footer .logout-button:active {
   background: #bdc3c7;
   border-color: #7f8c8d;
   transform: none;
@@ -343,11 +345,17 @@
   .sidebar-footer {
     padding: 12px;
     border-top: 1px solid #e9ecef;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
   }
 
   .user-info {
     gap: 10px;
-    margin-bottom: 8px;
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+    flex: 1;
   }
 
   .user-avatar {
@@ -364,10 +372,11 @@
     font-size: 10px;
   }
 
-  .logout-button {
+  .sidebar-footer .logout-button {
     padding: 10px;
     font-size: 12px;
     gap: 6px;
+    flex-shrink: 0;
   }
 
   .main-content {
@@ -436,9 +445,14 @@
     display: inline;
   }
 
+  .sidebar-footer {
+    padding: 10px;
+    gap: 8px;
+  }
+
   .user-info {
     gap: 8px;
-    margin-bottom: 6px;
+    flex: 1;
   }
 
   .user-avatar {
@@ -455,11 +469,12 @@
     font-size: 9px;
   }
 
-  .logout-button {
+  .sidebar-footer .logout-button {
     padding: 9px 8px;
     font-size: 11px;
     gap: 4px;
     min-height: 44px;
+    flex-shrink: 0;
   }
 
   .content-area {
@@ -509,6 +524,11 @@
     min-width: 18px;
   }
 
+  .sidebar-footer {
+    padding: 8px;
+    gap: 6px;
+  }
+
   .user-info {
     gap: 8px;
   }
@@ -527,7 +547,7 @@
     font-size: 8px;
   }
 
-  .logout-button {
+  .sidebar-footer .logout-button {
     padding: 8px;
     font-size: 10px;
   }
@@ -572,13 +592,18 @@
     min-width: 16px;
   }
 
+  .sidebar-footer {
+    padding: 6px;
+    gap: 4px;
+  }
+
   .user-avatar {
     width: 28px;
     height: 28px;
     font-size: 10px;
   }
 
-  .logout-button {
+  .sidebar-footer .logout-button {
     padding: 7px;
     font-size: 9px;
   }

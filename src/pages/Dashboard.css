@@ -100,47 +100,6 @@
   transform: translateY(-2px);
 }
 
-/* Dashboard Footer - Logout Button */
-.dashboard-footer {
-  margin-top: 30px;
-  padding: 20px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  text-align: center;
-}
-
-.dashboard-footer .logout-button {
-  width: 100%;
-  max-width: 300px;
-  padding: 12px 20px;
-  background: #ecf0f1;
-  color: #2c3e50;
-  border: 1px solid #bdc3c7;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.dashboard-footer .logout-button:hover {
-  background: #d5dbdb;
-  border-color: #95a5a6;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-.dashboard-footer .logout-button:active {
-  background: #bdc3c7;
-  border-color: #7f8c8d;
-}
-
 /* Responsive */
 @media (max-width: 1024px) {
   .dashboard {
@@ -171,16 +130,6 @@
 
   .section-card h2 {
     font-size: 15px;
-  }
-
-  .dashboard-footer {
-    margin-top: 25px;
-    padding: 16px;
-  }
-
-  .dashboard-footer .logout-button {
-    padding: 11px 18px;
-    font-size: 12px;
   }
 }
 
@@ -239,17 +188,6 @@
   .action-btn {
     padding: 10px;
     font-size: 12px;
-  }
-
-  .dashboard-footer {
-    margin-top: 20px;
-    padding: 14px;
-  }
-
-  .dashboard-footer .logout-button {
-    padding: 10px 16px;
-    font-size: 12px;
-    max-width: 100%;
   }
 }
 
@@ -311,18 +249,5 @@
   .action-btn {
     padding: 8px;
     font-size: 11px;
-  }
-
-  .dashboard-footer {
-    margin-top: 16px;
-    padding: 12px;
-  }
-
-  .dashboard-footer .logout-button {
-    width: 100%;
-    max-width: none;
-    padding: 10px 14px;
-    font-size: 11px;
-    min-height: 44px;
   }
 }
