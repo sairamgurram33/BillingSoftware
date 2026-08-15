@@ -47,12 +47,31 @@ async function initializeDatabase() {
         currentStock INT NOT NULL DEFAULT 0,
         gstPercentage DECIMAL(5, 2) DEFAULT 0,
         unit VARCHAR(50) DEFAULT 'piece',
+        isActive BOOLEAN NOT NULL DEFAULT TRUE,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         INDEX idx_productCode (productCode),
-        INDEX idx_productName (productName)
+        INDEX idx_productName (productName),
+        INDEX idx_isActive (isActive)
       )
     `);
+
+    // Add missing columns to existing products table (migration)
+    try {
+      await connection.query(`ALTER TABLE products ADD COLUMN unit VARCHAR(50) DEFAULT 'piece'`);
+    } catch (err: any) {
+      if (!err.message.includes('Duplicate column name')) {
+        throw err;
+      }
+    }
+
+    try {
+      await connection.query(`ALTER TABLE products ADD COLUMN isActive BOOLEAN NOT NULL DEFAULT TRUE`);
+    } catch (err: any) {
+      if (!err.message.includes('Duplicate column name')) {
+        throw err;
+      }
+    };
 
     // Create customers table
     await connection.query(`
@@ -269,7 +288,7 @@ app.get('/api/auth/me', authenticate, async (req: Request, res: Response) => {
 
 app.get('/api/products', authenticate, async (req: Request, res: Response) => {
   try {
-    const [products] = await pool.query('SELECT * FROM products ORDER BY productName');
+    const [products] = await pool.query('SELECT * FROM products WHERE isActive = TRUE ORDER BY productName');
     res.json({ products });
   } catch (error) {
     console.error('Get products error:', error);
@@ -324,19 +343,49 @@ app.put('/api/products/:id', authenticate, async (req: Request, res: Response) =
 });
 
 app.delete('/api/products/:id', authenticate, async (req: Request, res: Response) => {
+  const connection = await pool.getConnection();
+  
   try {
     const { id } = req.params;
     
-    const [result]: any = await pool.query('DELETE FROM products WHERE id = ?', [id]);
+    // Check if product is referenced by billItems
+    const [billItems]: any = await connection.query(
+      'SELECT COUNT(*) as count FROM billItems WHERE productId = ?',
+      [id]
+    );
 
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: 'Product not found' });
+    const isReferenced = Number(billItems[0]?.count || 0) > 0;
+
+    if (isReferenced) {
+      // Soft delete: set isActive = FALSE
+      const [result]: any = await connection.query(
+        'UPDATE products SET isActive = FALSE WHERE id = ?',
+        [id]
+      );
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: 'Product not found' });
+      }
+
+      res.json({ message: 'Product marked as inactive (soft delete due to billing history)' });
+    } else {
+      // Hard delete: physically remove from database
+      const [result]: any = await connection.query(
+        'DELETE FROM products WHERE id = ?',
+        [id]
+      );
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: 'Product not found' });
+      }
+
+      res.json({ message: 'Product deleted' });
     }
-
-    res.json({ message: 'Product deleted' });
   } catch (error) {
     console.error('Delete product error:', error);
     res.status(500).json({ error: 'Failed to delete product' });
+  } finally {
+    connection.release();
   }
 });
 
@@ -580,7 +629,7 @@ app.get('/api/reports/dashboard', authenticate, async (req: Request, res: Respon
     );
 
     const [productStats]: any = await pool.query(
-      'SELECT COUNT(*) as totalProducts FROM products'
+      'SELECT COUNT(*) as totalProducts FROM products WHERE isActive = TRUE'
     );
 
     const [customerStats]: any = await pool.query(
@@ -588,7 +637,7 @@ app.get('/api/reports/dashboard', authenticate, async (req: Request, res: Respon
     );
 
     const [topProducts] = await pool.query(
-      'SELECT * FROM products ORDER BY productName LIMIT 5'
+      'SELECT * FROM products WHERE isActive = TRUE ORDER BY productName LIMIT 5'
     );
 
     res.json({
