@@ -23,7 +23,7 @@ const SidebarLogoutButton: React.FC = () => {
   );
 };
 
-const MainLayout: React.FC<MainLayoutProps> = ({ user, onLogout, children }) => {
+const MainLayoutContent: React.FC<MainLayoutProps> = ({ user, onLogout, children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const location = useLocation();
 
@@ -83,21 +83,25 @@ const MainLayout: React.FC<MainLayoutProps> = ({ user, onLogout, children }) => 
               </div>
             )}
           </div>
-          <LogoutProvider onLogout={onLogout}>
-            <SidebarLogoutButton />
-          </LogoutProvider>
+          <SidebarLogoutButton />
         </div>
       </aside>
 
       {/* Main Content */}
       <main className="main-content">
         <div className="content-area">
-          <LogoutProvider onLogout={onLogout}>
-            {children}
-          </LogoutProvider>
+          {children}
         </div>
       </main>
     </div>
+  );
+};
+
+const MainLayout: React.FC<MainLayoutProps> = ({ user, onLogout, children }) => {
+  return (
+    <LogoutProvider onLogout={onLogout}>
+      <MainLayoutContent user={user} onLogout={onLogout} children={children} />
+    </LogoutProvider>
   );
 };
 
