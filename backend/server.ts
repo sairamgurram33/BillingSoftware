@@ -11,7 +11,7 @@ import mysql from 'mysql2/promise';
 dotenv.config();
 
 const app: Express = express();
-const PORT = process.env.PORT || 5000;
+const PORT = Number(process.env.PORT) || 5000;
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 // ==================== MYSQL CONNECTION ====================
@@ -508,3 +508,4 @@ console.log(`📍 Server running on port ${PORT}`);
 
 export default app;
 export { pool };
+
