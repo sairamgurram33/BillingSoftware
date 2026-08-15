@@ -26,14 +26,124 @@ const pool = mysql.createPool({
   queueLimit: 0
 });
 
-// Test connection
+// ==================== DATABASE INITIALIZATION ====================
+// Initialize database tables on startup
+async function initializeDatabase() {
+  const connection = await pool.getConnection();
+  try {
+    // Create database if not exists
+    await connection.query(`CREATE DATABASE IF NOT EXISTS ${process.env.DB_NAME || 'smartshop_pos'}`);
+    await connection.query(`USE ${process.env.DB_NAME || 'smartshop_pos'}`);
+
+    // Create products table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS products (
+        id VARCHAR(36) PRIMARY KEY,
+        productName VARCHAR(255) NOT NULL,
+        productCode VARCHAR(50) UNIQUE NOT NULL,
+        category VARCHAR(100),
+        purchasePrice DECIMAL(10, 2),
+        sellingPrice DECIMAL(10, 2) NOT NULL,
+        currentStock INT NOT NULL DEFAULT 0,
+        gstPercentage DECIMAL(5, 2) DEFAULT 0,
+        unit VARCHAR(50) DEFAULT 'piece',
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_productCode (productCode),
+        INDEX idx_productName (productName)
+      )
+    `);
+
+    // Create customers table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS customers (
+        id VARCHAR(36) PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        phone VARCHAR(20),
+        email VARCHAR(100),
+        address TEXT,
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_phone (phone),
+        INDEX idx_name (name)
+      )
+    `);
+
+    // Create bills table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS bills (
+        id VARCHAR(36) PRIMARY KEY,
+        billNumber VARCHAR(50) UNIQUE NOT NULL,
+        customerId VARCHAR(36),
+        subtotal DECIMAL(12, 2) NOT NULL DEFAULT 0,
+        discount DECIMAL(12, 2) NOT NULL DEFAULT 0,
+        gst DECIMAL(12, 2) NOT NULL DEFAULT 0,
+        totalAmount DECIMAL(12, 2) NOT NULL DEFAULT 0,
+        paymentStatus VARCHAR(50) DEFAULT 'COMPLETED',
+        paymentMethod VARCHAR(50) DEFAULT 'CASH',
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (customerId) REFERENCES customers(id) ON DELETE SET NULL,
+        INDEX idx_billNumber (billNumber),
+        INDEX idx_createdAt (createdAt),
+        INDEX idx_customerId (customerId),
+        INDEX idx_paymentStatus (paymentStatus)
+      )
+    `);
+
+    // Create billItems table (CRITICAL TABLE)
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS billItems (
+        id VARCHAR(36) PRIMARY KEY,
+        billId VARCHAR(36) NOT NULL,
+        productId VARCHAR(36) NOT NULL,
+        productName VARCHAR(255) NOT NULL,
+        quantity INT NOT NULL,
+        price DECIMAL(10, 2) NOT NULL,
+        amount DECIMAL(12, 2) NOT NULL,
+        gst DECIMAL(12, 2) NOT NULL DEFAULT 0,
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (billId) REFERENCES bills(id) ON DELETE CASCADE,
+        FOREIGN KEY (productId) REFERENCES products(id) ON DELETE RESTRICT,
+        INDEX idx_billId (billId),
+        INDEX idx_productId (productId)
+      )
+    `);
+
+    // Create users table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id VARCHAR(36) PRIMARY KEY,
+        username VARCHAR(50) UNIQUE NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        email VARCHAR(100),
+        role VARCHAR(20) DEFAULT 'cashier',
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_username (username)
+      )
+    `);
+
+    console.log('✅ Database tables initialized successfully!');
+  } catch (err) {
+    console.error('❌ Database initialization error:', err);
+    throw err;
+  } finally {
+    connection.release();
+  }
+}
+
+// Test connection and initialize database
 pool.getConnection()
-  .then(connection => {
+  .then(async connection => {
     console.log('✅ MySQL Connected Successfully!');
     connection.release();
+    
+    // Initialize database tables
+    await initializeDatabase();
   })
   .catch(err => {
     console.error('❌ MySQL Connection Error:', err.message);
+    process.exit(1);
   });
 
 // ==================== MIDDLEWARE ====================
