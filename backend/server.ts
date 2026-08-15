@@ -482,12 +482,30 @@ app.post('/api/sales', authenticate, async (req: Request, res: Response) => {
     const billDate = new Date();
     const dateStr = `${billDate.getFullYear()}${String(billDate.getMonth() + 1).padStart(2, '0')}${String(billDate.getDate()).padStart(2, '0')}`;
     
-    // Get the count of bills created today to generate sequential number
-    const [countRows]: any = await connection.query(
-      `SELECT COUNT(*) as count FROM bills WHERE DATE(createdAt) = CURDATE()`
+    // Generate the next unique bill number for today.
+    // Use the highest existing bill number instead of COUNT().
+    // This prevents duplicate bill numbers when an older bill is deleted.
+    const [lastBillRows]: any = await connection.query(
+      `SELECT billNumber
+       FROM bills
+       WHERE billNumber LIKE ?
+       ORDER BY billNumber DESC
+       LIMIT 1`,
+      [`BIL-${dateStr}-%`]
     );
-    const billCounter = (countRows[0].count + 1).toString().padStart(4, '0');
-    const billNumber = `BIL-${dateStr}-${billCounter}`;
+
+    let billCounter = 1;
+
+    if (lastBillRows.length > 0) {
+      const lastBillNumber = String(lastBillRows[0].billNumber);
+      const lastCounter = parseInt(lastBillNumber.split('-').pop() || '0', 10);
+
+      if (!isNaN(lastCounter)) {
+        billCounter = lastCounter + 1;
+      }
+    }
+
+    const billNumber = `BIL-${dateStr}-${billCounter.toString().padStart(4, '0')}`;
     const billId = uuidv4();
 
     // Insert bill
