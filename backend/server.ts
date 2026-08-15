@@ -103,8 +103,8 @@ async function initializeDatabase() {
         amount DECIMAL(12, 2) NOT NULL,
         gst DECIMAL(12, 2) NOT NULL DEFAULT 0,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (billId) REFERENCES bills(id) ON DELETE CASCADE,
-        FOREIGN KEY (productId) REFERENCES products(id) ON DELETE RESTRICT,
+        CONSTRAINT fk_billItems_bill FOREIGN KEY (billId) REFERENCES bills(id) ON DELETE CASCADE,
+        CONSTRAINT fk_billItems_product FOREIGN KEY (productId) REFERENCES products(id) ON DELETE RESTRICT,
         INDEX idx_billId (billId),
         INDEX idx_productId (productId)
       )
