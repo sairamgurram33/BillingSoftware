@@ -1,0 +1,527 @@
+.product-management {
+  padding: 20px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.page-header h1 {
+  color: #2c3e50;
+  font-size: 28px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+}
+
+.error-message {
+  background-color: #fadbd8;
+  border: 1px solid #e74c3c;
+  color: #c0392b;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+}
+
+.success-message {
+  background-color: #d5f4e6;
+  border: 1px solid #27ae60;
+  color: #27ae60;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+}
+
+.form-card {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.form-card h2 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  color: #2c3e50;
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.form-group input {
+  padding: 10px;
+  border: 1px solid #bdc3c7;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.form-group input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.btn-success {
+  background: #27ae60;
+  color: white;
+  padding: 12px 30px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-success:hover {
+  background: #229954;
+}
+
+.search-bar {
+  margin-bottom: 20px;
+}
+
+.search-bar input {
+  width: 100%;
+  max-width: 400px;
+  padding: 12px;
+  border: 1px solid #bdc3c7;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.products-table {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow-x: auto;
+}
+
+.products-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.products-table th {
+  background-color: #f8f9fa;
+  padding: 15px;
+  text-align: left;
+  color: #2c3e50;
+  font-weight: 600;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.products-table td {
+  padding: 15px;
+  border-bottom: 1px solid #e9ecef;
+  color: #555;
+}
+
+.products-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.btn-delete {
+  background: #e74c3c;
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 5px;
+}
+
+.btn-delete:hover {
+  background: #c0392b;
+}
+
+.btn-edit {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.btn-edit:hover {
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  transform: translateY(-1px);
+}
+
+.no-data {
+  text-align: center;
+  color: #7f8c8d;
+  padding: 40px !important;
+}
+
+/* Pagination Styles */
+.pagination-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+}
+
+.pagination-info {
+  color: #2c3e50;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pagination-btn {
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.pagination-btn:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.pagination-page {
+  color: #2c3e50;
+  font-size: 13px;
+  font-weight: 600;
+  min-width: 120px;
+  text-align: center;
+}
+
+.search-bar {
+  margin-bottom: 20px;
+}
+
+.search-bar input {
+  width: 100%;
+  max-width: 400px;
+  padding: 12px;
+  border: 1px solid #bdc3c7;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .product-management {
+    padding: 16px;
+  }
+
+  .page-header {
+    margin-bottom: 20px;
+  }
+
+  .page-header h1 {
+    font-size: 24px;
+  }
+
+  .form-row {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+  }
+
+  .products-table {
+    font-size: 13px;
+  }
+
+  .products-table th,
+  .products-table td {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .product-management {
+    padding: 12px;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .page-header h1 {
+    font-size: 20px;
+  }
+
+  .btn-primary {
+    width: 100%;
+    padding: 10px;
+  }
+
+  .error-message,
+  .success-message {
+    padding: 10px;
+    margin-bottom: 12px;
+    font-size: 12px;
+  }
+
+  .form-card {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .form-card h2 {
+    font-size: 16px;
+    margin-bottom: 16px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .form-group label {
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
+
+  .form-group input {
+    padding: 8px;
+    font-size: 13px;
+  }
+
+  .btn-success {
+    width: 100%;
+    padding: 10px;
+  }
+
+  .search-bar {
+    margin-bottom: 16px;
+  }
+
+  .search-bar input {
+    max-width: 100%;
+    font-size: 13px;
+    padding: 10px;
+  }
+
+  .products-table {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .products-table table {
+    font-size: 12px;
+  }
+
+  .products-table th,
+  .products-table td {
+    padding: 10px;
+  }
+
+  .btn-delete,
+  .btn-edit {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+
+  .btn-delete {
+    margin-left: 3px;
+  }
+
+  .no-data {
+    padding: 30px 10px !important;
+  }
+
+  .pagination-container {
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .pagination-info {
+    width: 100%;
+    text-align: center;
+    font-size: 12px;
+  }
+
+  .pagination-controls {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .pagination-btn {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .pagination-page {
+    min-width: 100px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 500px) {
+  .product-management {
+    padding: 8px;
+  }
+
+  .page-header {
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .page-header h1 {
+    font-size: 18px;
+  }
+
+  .btn-primary {
+    padding: 8px;
+    font-size: 12px;
+  }
+
+  .error-message,
+  .success-message {
+    padding: 8px;
+    margin-bottom: 10px;
+    font-size: 11px;
+  }
+
+  .form-card {
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+
+  .form-card h2 {
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+
+  .form-row {
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .form-group label {
+    font-size: 11px;
+    margin-bottom: 4px;
+  }
+
+  .form-group input {
+    padding: 6px;
+    font-size: 12px;
+  }
+
+  .btn-success {
+    padding: 8px;
+    font-size: 11px;
+  }
+
+  .search-bar {
+    margin-bottom: 12px;
+  }
+
+  .search-bar input {
+    font-size: 12px;
+    padding: 8px;
+  }
+
+  .products-table table {
+    font-size: 11px;
+  }
+
+  .products-table th,
+  .products-table td {
+    padding: 8px;
+  }
+
+  .btn-delete,
+  .btn-edit {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+
+  .btn-delete {
+    margin-left: 2px;
+  }
+
+  .no-data {
+    padding: 20px 8px !important;
+    font-size: 14px;
+  }
+
+  .pagination-container {
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .pagination-info {
+    font-size: 10px;
+  }
+
+  .pagination-controls {
+    gap: 4px;
+  }
+
+  .pagination-btn {
+    padding: 5px 8px;
+    font-size: 10px;
+  }
+
+  .pagination-page {
+    min-width: 90px;
+    font-size: 10px;
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "name": "smartshop-pos",
+  "version": "1.0.0",
+  "description": "Professional Shop Billing & POS Desktop Application",
+  "main": "electron/main/main.js",
+  "homepage": "./",
+  "private": true,
+  "author": "SmartShop",
+  "license": "MIT",
+  "scripts": {
+    "start": "concurrently \"npm run backend:dev\" \"npm run frontend:dev\"",
+    "backend:dev": "node -r ts-node/register backend/server.ts",
+    "frontend:dev": "react-scripts start",
+    "build": "npm run build:frontend && npm run build:backend",
+    "build:frontend": "react-scripts build",
+    "build:backend": "tsc --project backend/tsconfig.json",
+    "test": "jest",
+    "test:watch": "jest --watch"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "bcryptjs": "^2.4.3",
+    "concurrently": "^8.2.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-async-errors": "^3.1.1",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.23.3",
+    "qrcode": "^1.5.3",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.16.0",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.2",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^4.17.20",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^18.11.18",
+    "@types/react": "^18.2.31",
+    "@types/react-dom": "^18.2.14",
+    "@types/uuid": "^9.0.6",
+    "react-scripts": "5.0.1",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.9.5"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "build": {
+    "appId": "com.smartshop.pos",
+    "productName": "SmartShop POS",
+    "files": [
+      "build/**/*",
+      "electron/**/*",
+      "node_modules/**/*"
+    ],
+    "directories": {
+      "buildResources": "assets"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}
