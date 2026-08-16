@@ -46,9 +46,9 @@ const BillingPage: React.FC = () => {
   const [showBillPreview, setShowBillPreview] = useState(false);
   const [billData, setBillData] = useState<BillData | null>(null);
   const [shopInfo, setShopInfo] = useState({
-    name: 'SmartShop Hardware Store',
-    phone: '9876543210',
-    address: '123 Hardware Lane, City Center'
+    name: '',
+    phone: '',
+    address: ''
   });
 
   // UPI Payment State
@@ -63,48 +63,50 @@ const BillingPage: React.FC = () => {
 
   useEffect(() => {
     fetchProducts();
-    // Load shop settings from localStorage
+    loadShopSettings();
+    loadPaymentSettings();
+  }, []);
+
+  const loadShopSettings = () => {
+    // Load shop settings from localStorage (the source of truth from Settings page)
     const savedShopSettings = localStorage.getItem('shopSettings');
     if (savedShopSettings) {
       try {
         const settings = JSON.parse(savedShopSettings);
         setShopInfo({
-          name: settings.shopName || shopInfo.name,
-          phone: settings.phone || shopInfo.phone,
-          address: settings.address || shopInfo.address
+          name: settings.shopName || '',
+          phone: settings.phone || '',
+          address: settings.address || ''
         });
+        // Update UPI config shop name if available
+        setUpiConfig(prev => ({
+          ...prev,
+          shopName: settings.shopName || prev.shopName
+        }));
       } catch (error) {
         console.error('Error loading shop settings:', error);
       }
     }
+  };
 
-    // Load UPI configuration from localStorage
+  const loadPaymentSettings = () => {
+    // Load UPI and payment settings from localStorage
     const savedPaymentSettings = localStorage.getItem('paymentSettings');
     if (savedPaymentSettings) {
       try {
         const settings = JSON.parse(savedPaymentSettings);
         if (settings.upiId) {
-          setUpiConfig({
+          setUpiConfig(prev => ({
+            ...prev,
             upiId: settings.upiId,
-            shopName: settings.shopName || shopInfo.name,
-          });
+          }));
         }
-      } catch (error) {
-        console.error('Error loading payment settings:', error);
-      }
-    }
-
-    // Load payment settings (QR code) from localStorage
-    const oldPaymentSettings = localStorage.getItem('paymentSettings');
-    if (oldPaymentSettings) {
-      try {
-        const settings = JSON.parse(oldPaymentSettings);
         setPaymentQRCode(settings.qrCodeImage || null);
       } catch (error) {
         console.error('Error loading payment settings:', error);
       }
     }
-  }, []);
+  };
 
   const fetchProducts = async () => {
     try {
