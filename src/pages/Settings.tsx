@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import './Settings.css';
+import { API_BASE_URL } from '../utils/apiConfig';
 
 interface ShopSettings {
+  id?: number;
   shopName: string;
   address: string;
   phone: string;
   email: string;
   gstNumber: string;
+  upiId?: string;
 }
 
 interface PrinterSettings {
@@ -23,11 +26,12 @@ interface PaymentSettings {
 
 const Settings: React.FC = () => {
   const [shopSettings, setShopSettings] = useState<ShopSettings>({
-    shopName: 'SmartShop Hardware Store',
-    address: '123 Hardware Lane',
-    phone: '9876543210',
-    email: 'contact@smartshop.com',
-    gstNumber: 'GST123456789',
+    shopName: '',
+    address: '',
+    phone: '',
+    email: '',
+    gstNumber: '',
+    upiId: '',
   });
 
   const [printerSettings, setPrinterSettings] = useState<PrinterSettings>({
@@ -44,21 +48,38 @@ const Settings: React.FC = () => {
 
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'success' | 'error'>('success');
+  const [loading, setLoading] = useState(false);
 
-  // Load settings from localStorage on mount
+  // Load shop settings from backend database on mount
   useEffect(() => {
-    const savedShopSettings = localStorage.getItem('shopSettings');
-    const savedPrinterSettings = localStorage.getItem('printerSettings');
-    const savedPaymentSettings = localStorage.getItem('paymentSettings');
+    loadShopSettingsFromBackend();
+    loadPrinterSettings();
+    loadPaymentSettings();
+  }, []);
 
-    if (savedShopSettings) {
-      try {
-        setShopSettings(JSON.parse(savedShopSettings));
-      } catch (error) {
-        console.error('Error loading shop settings:', error);
+  const loadShopSettingsFromBackend = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/settings/shop`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setShopSettings(data.settings);
+      } else {
+        console.error('Failed to load shop settings from backend');
       }
+    } catch (error) {
+      console.error('Error loading shop settings:', error);
+    } finally {
+      setLoading(false);
     }
+  };
 
+  const loadPrinterSettings = () => {
+    const savedPrinterSettings = localStorage.getItem('printerSettings');
     if (savedPrinterSettings) {
       try {
         setPrinterSettings(JSON.parse(savedPrinterSettings));
@@ -66,7 +87,10 @@ const Settings: React.FC = () => {
         console.error('Error loading printer settings:', error);
       }
     }
+  };
 
+  const loadPaymentSettings = () => {
+    const savedPaymentSettings = localStorage.getItem('paymentSettings');
     if (savedPaymentSettings) {
       try {
         setPaymentSettings(JSON.parse(savedPaymentSettings));
@@ -74,18 +98,37 @@ const Settings: React.FC = () => {
         console.error('Error loading payment settings:', error);
       }
     }
-  }, []);
+  };
 
-  const handleSaveShop = () => {
+  const handleSaveShop = async () => {
     try {
-      localStorage.setItem('shopSettings', JSON.stringify(shopSettings));
-      setMessageType('success');
-      setMessage('✅ Shop settings saved successfully!');
-      setTimeout(() => setMessage(''), 3000);
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/settings/shop`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(shopSettings),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setShopSettings(data.settings);
+        setMessageType('success');
+        setMessage('✅ Shop settings saved successfully!');
+        setTimeout(() => setMessage(''), 3000);
+      } else {
+        throw new Error('Failed to save shop settings');
+      }
     } catch (error) {
+      console.error('Error saving shop settings:', error);
       setMessageType('error');
       setMessage('❌ Failed to save shop settings');
       setTimeout(() => setMessage(''), 3000);
+    } finally {
+      setLoading(false);
     }
   };
 

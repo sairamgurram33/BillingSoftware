@@ -46,9 +46,11 @@ const BillingPage: React.FC = () => {
   const [showBillPreview, setShowBillPreview] = useState(false);
   const [billData, setBillData] = useState<BillData | null>(null);
   const [shopInfo, setShopInfo] = useState({
-    name: '',
+    shopName: '',
     phone: '',
-    address: ''
+    address: '',
+    email: '',
+    gstNumber: ''
   });
 
   // UPI Payment State
@@ -63,44 +65,46 @@ const BillingPage: React.FC = () => {
 
   useEffect(() => {
     fetchProducts();
-    loadShopSettings();
+    loadShopSettingsFromBackend();
     loadPaymentSettings();
   }, []);
 
-  const loadShopSettings = () => {
-    // Load shop settings from localStorage (the source of truth from Settings page)
-    const savedShopSettings = localStorage.getItem('shopSettings');
-    if (savedShopSettings) {
-      try {
-        const settings = JSON.parse(savedShopSettings);
+  const loadShopSettingsFromBackend = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/settings/shop`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
         setShopInfo({
-          name: settings.shopName || '',
-          phone: settings.phone || '',
-          address: settings.address || ''
+          shopName: data.settings.shopName || '',
+          phone: data.settings.phone || '',
+          address: data.settings.address || '',
+          email: data.settings.email || '',
+          gstNumber: data.settings.gstNumber || ''
         });
-        // Update UPI config shop name if available
+        // Update UPI config shop name from backend
         setUpiConfig(prev => ({
           ...prev,
-          shopName: settings.shopName || prev.shopName
+          shopName: data.settings.shopName || prev.shopName,
+          upiId: data.settings.upiId || prev.upiId
         }));
-      } catch (error) {
-        console.error('Error loading shop settings:', error);
+      } else {
+        console.error('Failed to load shop settings from backend');
       }
+    } catch (error) {
+      console.error('Error loading shop settings:', error);
     }
   };
 
   const loadPaymentSettings = () => {
-    // Load UPI and payment settings from localStorage
+    // Load payment QR code from localStorage (kept for UI preferences)
     const savedPaymentSettings = localStorage.getItem('paymentSettings');
     if (savedPaymentSettings) {
       try {
         const settings = JSON.parse(savedPaymentSettings);
-        if (settings.upiId) {
-          setUpiConfig(prev => ({
-            ...prev,
-            upiId: settings.upiId,
-          }));
-        }
         setPaymentQRCode(settings.qrCodeImage || null);
       } catch (error) {
         console.error('Error loading payment settings:', error);
@@ -271,7 +275,7 @@ const BillingPage: React.FC = () => {
         });
         const result = await generateDynamicUPIQR({
           upiId: upiConfig.upiId,
-          shopName: upiConfig.shopName || shopInfo.name,
+          shopName: upiConfig.shopName || shopInfo.shopName,
           amount: Math.round(billData.total * 100) / 100,
           transactionRef: `BILL-${billData.billNumber}`,
         });
@@ -330,7 +334,7 @@ const BillingPage: React.FC = () => {
         <div class="copy-badge">${copyType}</div>
         
         <div class="header">
-          <h1>${shopInfo.name}</h1>
+          <h1>${shopInfo.shopName}</h1>
           <p>${shopInfo.phone}</p>
           <p>${shopInfo.address}</p>
         </div>
@@ -439,7 +443,7 @@ const BillingPage: React.FC = () => {
         <div class="copy-badge">📋 ORIGINAL</div>
         
         <div class="header">
-          <h1>${shopInfo.name}</h1>
+          <h1>${shopInfo.shopName}</h1>
           <p>${shopInfo.phone}</p>
           <p>${shopInfo.address}</p>
         </div>
@@ -509,7 +513,7 @@ const BillingPage: React.FC = () => {
         <div class="copy-badge">📋 DUPLICATE</div>
         
         <div class="header">
-          <h1>${shopInfo.name}</h1>
+          <h1>${shopInfo.shopName}</h1>
           <p>${shopInfo.phone}</p>
           <p>${shopInfo.address}</p>
         </div>
@@ -649,7 +653,7 @@ const BillingPage: React.FC = () => {
 
           <div className="bill-preview-content">
             <div className="receipt-header">
-              <h3>🏪 {shopInfo.name}</h3>
+              <h3>🏪 {shopInfo.shopName}</h3>
               <p>📞 {shopInfo.phone}</p>
               <p>📍 {shopInfo.address}</p>
             </div>
@@ -848,7 +852,7 @@ const BillingPage: React.FC = () => {
         {/* Header */}
         <div className="billing-header">
           <div className="shop-info">
-            <h1>🏪 {shopInfo.name}</h1>
+            <h1>🏪 {shopInfo.shopName}</h1>
             <div className="shop-details">
               <span>📞 {shopInfo.phone}</span>
               <span>📍 {shopInfo.address}</span>

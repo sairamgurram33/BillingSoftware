@@ -142,6 +142,33 @@ async function initializeDatabase() {
       )
     `);
 
+    // Create shop_settings table (single record for shop configuration)
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS shop_settings (
+        id INT PRIMARY KEY DEFAULT 1,
+        shopName VARCHAR(255),
+        phone VARCHAR(20),
+        email VARCHAR(100),
+        address TEXT,
+        gstNumber VARCHAR(50),
+        upiId VARCHAR(100),
+        updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Initialize shop_settings with default record if empty
+    try {
+      const [rows]: any = await connection.query('SELECT COUNT(*) as count FROM shop_settings WHERE id = 1');
+      if (rows[0].count === 0) {
+        await connection.query(`
+          INSERT INTO shop_settings (id, shopName, phone, email, address, gstNumber, upiId)
+          VALUES (1, 'SmartShop Hardware Store', '9876543210', 'contact@smartshop.com', '123 Hardware Lane', '', '')
+        `);
+      }
+    } catch (err: any) {
+      console.error('Error initializing shop settings:', err);
+    }
+
     console.log('✅ Database tables initialized successfully!');
   } catch (err) {
     console.error('❌ Database initialization error:', err);
@@ -194,7 +221,7 @@ const authenticate = (req: Request, res: Response, next: NextFunction) => {
 app.get('/api/health', async (req: Request, res: Response) => {
   try {
     await pool.query('SELECT 1');
-    res.json({ 
+        res.json({
       status: 'OK', 
       message: 'Server is running',
       mode: 'MySQL Database Connected',
@@ -661,6 +688,60 @@ app.get('/api/reports/dashboard', authenticate, async (req: Request, res: Respon
   } catch (error) {
     console.error('Get dashboard error:', error);
     res.status(500).json({ error: 'Failed to fetch dashboard data' });
+  }
+});
+
+// ==================== SHOP SETTINGS ROUTES ====================
+
+// GET shop settings from database
+app.get('/api/settings/shop', authenticate, async (req: Request, res: Response) => {
+  try {
+    const [rows]: any = await pool.query(
+      'SELECT id, shopName, phone, email, address, gstNumber, upiId FROM shop_settings WHERE id = 1'
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Shop settings not found' });
+    }
+
+    res.json({ settings: rows[0] });
+  } catch (error) {
+    console.error('Get shop settings error:', error);
+    res.status(500).json({ error: 'Failed to fetch shop settings' });
+  }
+});
+
+// PUT/UPDATE shop settings in database
+app.put('/api/settings/shop', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { shopName, phone, email, address, gstNumber, upiId } = req.body;
+
+    // Update shop settings (id = 1 is the single config record)
+    const [result]: any = await pool.query(
+      `UPDATE shop_settings SET shopName = ?, phone = ?, email = ?, address = ?, gstNumber = ?, upiId = ? WHERE id = 1`,
+      [shopName || '', phone || '', email || '', address || '', gstNumber || '', upiId || '']
+    );
+
+    if (result.affectedRows === 0) {
+      // If no rows updated, create the record
+      await pool.query(
+        `INSERT INTO shop_settings (id, shopName, phone, email, address, gstNumber, upiId) VALUES (1, ?, ?, ?, ?, ?, ?)`,
+        [shopName || '', phone || '', email || '', address || '', gstNumber || '', upiId || '']
+      );
+    }
+
+    // Fetch and return updated settings
+    const [rows]: any = await pool.query(
+      'SELECT id, shopName, phone, email, address, gstNumber, upiId FROM shop_settings WHERE id = 1'
+    );
+
+        res.json({
+      message: 'Shop settings updated successfully',
+      settings: rows[0]
+    });
+  } catch (error) {
+    console.error('Update shop settings error:', error);
+    res.status(500).json({ error: 'Failed to update shop settings' });
   }
 });
 
