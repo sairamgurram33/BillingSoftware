@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../utils/apiConfig';
 import './Dashboard.css';
@@ -29,16 +29,32 @@ const Dashboard: React.FC = () => {
   const fetchStats = async () => {
     try {
       const token = localStorage.getItem('token');
+
+      // Set up AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
       const response = await fetch(`${API_BASE_URL}/reports/dashboard`, {
         headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         const data = await response.json();
         setStats(data);
+      } else {
+        console.error('Failed to fetch stats:', response.status);
+        // Show partial data on error
       }
     } catch (error) {
-      console.error('Failed to fetch stats:', error);
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.error('Dashboard stats fetch timeout');
+      } else {
+        console.error('Failed to fetch stats:', error);
+      }
+      // Don't set error - let dashboard render with default stats
     } finally {
       setLoading(false);
     }
@@ -101,25 +117,25 @@ const Dashboard: React.FC = () => {
         <div className="section-card">
           <h2>Quick Actions</h2>
           <div className="quick-actions">
-            <button 
+            <button
               className="action-btn"
               onClick={() => navigate('/billing')}
             >
               Create Bill
             </button>
-            <button 
+            <button
               className="action-btn"
               onClick={() => navigate('/products')}
             >
               Add Product
             </button>
-            <button 
+            <button
               className="action-btn"
               onClick={() => navigate('/customers')}
             >
               Add Customer
             </button>
-            <button 
+            <button
               className="action-btn"
               onClick={() => navigate('/reports')}
             >

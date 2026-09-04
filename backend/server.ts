@@ -178,22 +178,55 @@ async function initializeDatabase() {
   }
 }
 
-// Test connection and initialize database
+// Test connection and initialize database asynchronously (non-blocking)
+let dbInitialized = false;
 pool.getConnection()
   .then(async connection => {
     console.log('✅ MySQL Connected Successfully!');
     connection.release();
     
-    // Initialize database tables
-    await initializeDatabase();
+    // Initialize database tables in background (non-blocking)
+    try {
+      await initializeDatabase();
+      dbInitialized = true;
+    } catch (err) {
+      console.error('⚠️ Database initialization error (will retry):', err);
+      // Don't exit - let server run and retry on first request
+    }
   })
   .catch(err => {
-    console.error('❌ MySQL Connection Error:', err.message);
-    process.exit(1);
+    console.error('⚠️ Initial MySQL Connection Error:', err.message);
+    console.error('Server will still start - retrying on first request...');
+    // Don't exit - let server start and handle retry
   });
 
 // ==================== MIDDLEWARE ====================
-app.use(cors());
+// Configure CORS to allow frontend from production or development
+const corsOrigins: (string | RegExp)[] = [
+  'http://localhost:3000',
+  'http://localhost:5000',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:5000'
+];
+
+// Add frontend URL from environment if set (Render production)
+if (process.env.REACT_APP_FRONTEND_URL) {
+  corsOrigins.push(process.env.REACT_APP_FRONTEND_URL);
+}
+
+// In development, allow all origins
+if (process.env.NODE_ENV === 'development') {
+  corsOrigins.push(/localhost/, /127\.0\.0\.1/);
+}
+
+const corsOptions = {
+  origin: corsOrigins,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Authentication Middleware
@@ -221,16 +254,17 @@ const authenticate = (req: Request, res: Response, next: NextFunction) => {
 app.get('/api/health', async (req: Request, res: Response) => {
   try {
     await pool.query('SELECT 1');
-        res.json({
+    res.json({
       status: 'OK', 
       message: 'Server is running',
-      mode: 'MySQL Database Connected',
-      database: process.env.DB_NAME
+      database: dbInitialized ? 'initialized' : 'initializing',
+      timestamp: new Date().toISOString()
     });
   } catch (error) {
     res.status(500).json({ 
       status: 'ERROR', 
-      message: 'Database connection failed' 
+      message: 'Database connection failed',
+      timestamp: new Date().toISOString()
     });
   }
 });

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import './LoginPage.css';
 import { API_BASE_URL } from '../utils/apiConfig';
 
@@ -19,11 +19,18 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     setLoading(true);
 
     try {
+      // Set up AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const data = await response.json();
@@ -34,9 +41,17 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       localStorage.setItem('token', data.token);
       onLogin(data.user, data.token);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
-    } finally {
+      // Always reset loading state on any error
       setLoading(false);
+
+      if (err instanceof Error && err.name === 'AbortError') {
+        setError('Request timeout - backend server may be unavailable. Please check your connection and try again.');
+      } else if (err instanceof TypeError && err.message.includes('Failed to fetch')) {
+        setError('Unable to connect to the server. Please check the backend API URL and try again.');
+      } else {
+        setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
+      }
+      console.error('Login error:', err);
     }
   };
 

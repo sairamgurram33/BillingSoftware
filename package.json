@@ -7,6 +7,10 @@
   "private": true,
   "author": "SmartShop",
   "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
   "scripts": {
     "start": "concurrently \"npm run backend:dev\" \"npm run frontend:dev\"",
     "backend:dev": "node -r ts-node/register backend/server.ts",
@@ -14,6 +18,8 @@
     "build": "npm run build:frontend && npm run build:backend",
     "build:frontend": "react-scripts build",
     "build:backend": "tsc --project backend/tsconfig.json",
+    "start:frontend": "npx serve -s build -l 3000",
+    "start:backend": "node dist/backend/server.js",
     "test": "jest",
     "test:watch": "jest --watch"
   },

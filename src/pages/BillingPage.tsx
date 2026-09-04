@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import './BillingPage.css';
 import { API_BASE_URL } from '../utils/apiConfig';
 import { generateDynamicUPIQR, validateUPIID, validateBillAmount } from '../utils/upiQRGenerator';
@@ -69,12 +69,27 @@ const BillingPage: React.FC = () => {
     loadPaymentSettings();
   }, []);
 
+  // Auto-generate QR when upiConfig.upiId is set and bill is displayed
+  useEffect(() => {
+    if (showBillPreview && billData && paymentMethod === 'upi' && upiConfig.upiId && !upiQRCode) {
+      generateUPIQRForBill(billData.total);
+    }
+  }, [showBillPreview, billData, paymentMethod, upiConfig.upiId, upiQRCode]);
+
   const loadShopSettingsFromBackend = async () => {
     try {
       const token = localStorage.getItem('token');
+
+      // Set up AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
       const response = await fetch(`${API_BASE_URL}/settings/shop`, {
         headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         const data = await response.json();
@@ -85,7 +100,7 @@ const BillingPage: React.FC = () => {
           email: data.settings.email || '',
           gstNumber: data.settings.gstNumber || ''
         });
-        // Update UPI config shop name from backend
+        // Update UPI config shop name and UPI ID from backend
         setUpiConfig(prev => ({
           ...prev,
           shopName: data.settings.shopName || prev.shopName,
@@ -95,7 +110,11 @@ const BillingPage: React.FC = () => {
         console.error('Failed to load shop settings from backend');
       }
     } catch (error) {
-      console.error('Error loading shop settings:', error);
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.error('Shop settings load timeout');
+      } else {
+        console.error('Error loading shop settings:', error);
+      }
     }
   };
 
@@ -115,13 +134,26 @@ const BillingPage: React.FC = () => {
   const fetchProducts = async () => {
     try {
       const token = localStorage.getItem('token');
+
+      // Set up AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
       const response = await fetch(`${API_BASE_URL}/products`, {
         headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
+
       const data = await response.json();
       setProducts(data.products);
-    } catch (err) {
-      console.error('Failed to fetch products:', err);
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.error('Products fetch timeout');
+      } else {
+        console.error('Failed to fetch products:', error);
+      }
     }
   };
 
@@ -135,21 +167,21 @@ const BillingPage: React.FC = () => {
     const productPrice = Number(product.sellingPrice) || 0;
     const productStock = Number(product.currentStock) || 0;
     const productGST = Number(product.gstPercentage) || 0;
-    
+
     if (existingItem) {
       if (existingItem.quantity < productStock) {
         const newQuantity = existingItem.quantity + 1;
         const newAmount = productPrice * newQuantity;
         const newGst = (newAmount * productGST) / 100;
-        
+
         setCartItems(cartItems.map(item =>
           item.productId === product.id
-            ? { 
-                ...item, 
-                quantity: newQuantity, 
+            ? {
+                ...item,
+                quantity: newQuantity,
                 amount: newAmount,
                 gst: newGst,
-                price: productPrice 
+                price: productPrice
               }
             : item
         ));
@@ -159,7 +191,7 @@ const BillingPage: React.FC = () => {
     } else {
       const amount = productPrice;
       const gstAmount = (amount * productGST) / 100;
-      
+
       setCartItems([...cartItems, {
         id: `cart-${Date.now()}`,
         productId: product.id,
@@ -209,9 +241,14 @@ const BillingPage: React.FC = () => {
 
     setLoading(true);
     setError('');
-    
+
     try {
       const token = localStorage.getItem('token');
+
+      // Set up AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout for bill creation
+
       const response = await fetch(`${API_BASE_URL}/sales`, {
         method: 'POST',
         headers: {
@@ -225,7 +262,10 @@ const BillingPage: React.FC = () => {
           })),
           discount: discountAmount,
         }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const data = await response.json();
@@ -233,7 +273,7 @@ const BillingPage: React.FC = () => {
       }
 
       const data = await response.json();
-      
+
       setBillData({
         billNumber: data.bill.billNumber,
         items: cartItems,
@@ -247,10 +287,14 @@ const BillingPage: React.FC = () => {
       setShowBillPreview(true);
       setSuccess(`Bill ${data.bill.billNumber} created successfully!`);
       setTimeout(() => setSuccess(''), 3000);
-      
+
       fetchProducts();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create bill');
+      if (err instanceof Error && err.name === 'AbortError') {
+        setError('Request timeout - server may be unavailable. Please try again.');
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to create bill');
+      }
     } finally {
       setLoading(false);
     }
@@ -261,7 +305,7 @@ const BillingPage: React.FC = () => {
 
     // Use the QR code that's already displayed in preview
     let upiQRForPrint: string | null = null;
-    
+
     // If UPI payment method and QR is displayed in preview, use it
     if (paymentMethod === 'upi' && upiQRCode) {
       upiQRForPrint = upiQRCode;
@@ -332,7 +376,7 @@ const BillingPage: React.FC = () => {
       </head>
       <body>
         <div class="copy-badge">${copyType}</div>
-        
+
         <div class="header">
           <h1>${shopInfo.shopName}</h1>
           <p>${shopInfo.phone}</p>
@@ -441,7 +485,7 @@ const BillingPage: React.FC = () => {
       <body>
         <!-- COPY 1: ORIGINAL -->
         <div class="copy-badge">📋 ORIGINAL</div>
-        
+
         <div class="header">
           <h1>${shopInfo.shopName}</h1>
           <p>${shopInfo.phone}</p>
@@ -511,7 +555,7 @@ const BillingPage: React.FC = () => {
 
         <!-- COPY 2: DUPLICATE -->
         <div class="copy-badge">📋 DUPLICATE</div>
-        
+
         <div class="header">
           <h1>${shopInfo.shopName}</h1>
           <p>${shopInfo.phone}</p>
@@ -612,18 +656,25 @@ const BillingPage: React.FC = () => {
         return;
       }
 
-      const result = await generateDynamicUPIQR({
+      console.log('🔄 Generating UPI QR...', {
         upiId: upiConfig.upiId,
         shopName: upiConfig.shopName,
+        amount: billAmount
+      });
+
+      const result = await generateDynamicUPIQR({
+        upiId: upiConfig.upiId,
+        shopName: upiConfig.shopName || shopInfo.shopName,
         amount: billAmount,
         transactionRef: `BILL-${Date.now()}`,
       });
 
+      console.log('✅ UPI QR Generated successfully');
       setUpiQRCode(result.qrCodeDataURL);
       setUpiURI(result.uri);
       setError('');
     } catch (err) {
-      console.error('UPI QR Generation Error:', err);
+      console.error('❌ UPI QR Generation Error:', err);
       setError(`❌ ${err instanceof Error ? err.message : 'Failed to generate UPI QR code'}`);
       setUpiQRCode(null);
     }
@@ -634,10 +685,12 @@ const BillingPage: React.FC = () => {
     setPaymentMethod(method);
     if (method === 'upi' && billData) {
       // Generate QR for current bill amount
+      console.log('📱 Switching to UPI - generating QR for amount:', billData.total);
       await generateUPIQRForBill(billData.total);
     } else {
       setUpiQRCode(null);
       setUpiURI(null);
+      setError('');
     }
   };
 
@@ -717,9 +770,9 @@ const BillingPage: React.FC = () => {
               {paymentQRCode && (
                 <div style={{ marginTop: '20px', paddingTop: '15px', borderTop: '2px dashed #e9ecef' }}>
                   <p style={{ fontSize: '12px', color: '#2c3e50', fontWeight: 600, marginBottom: '10px' }}>💳 Scan to Pay:</p>
-                  <img 
-                    src={paymentQRCode} 
-                    alt="Payment QR Code" 
+                  <img
+                    src={paymentQRCode}
+                    alt="Payment QR Code"
                     style={{ maxWidth: '120px', maxHeight: '120px', borderRadius: '8px', border: '2px solid #ff9500' }}
                   />
                 </div>
@@ -790,12 +843,12 @@ const BillingPage: React.FC = () => {
                   <div style={{ textAlign: 'center' }}>
                     <p style={{ margin: '0 0 10px 0', fontSize: '13px', color: '#2c3e50', fontWeight: 700 }}>💳 UPI PAYMENT</p>
                     <p style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#7f8c8d' }}>Amount: <strong style={{ color: '#ff9500', fontSize: '14px' }}>₹{Number(billData.total || 0).toFixed(2)}</strong></p>
-                    
+
                     {upiQRCode ? (
                       <div style={{ textAlign: 'center' }}>
-                        <img 
-                          src={upiQRCode} 
-                          alt="UPI QR Code" 
+                        <img
+                          src={upiQRCode}
+                          alt="UPI QR Code"
                           style={{ maxWidth: '140px', maxHeight: '140px', margin: '10px auto', borderRadius: '8px', border: '2px solid #ff9500' }}
                         />
                         <p style={{ margin: '10px 0 0 0', fontSize: '11px', color: '#27ae60', fontWeight: 600 }}>✅ Scan & Pay</p>

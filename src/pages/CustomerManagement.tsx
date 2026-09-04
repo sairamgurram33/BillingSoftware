@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../utils/apiConfig';
 
 interface Customer {
@@ -27,13 +27,26 @@ const CustomerManagement: React.FC = () => {
   const fetchCustomers = async () => {
     try {
       const token = localStorage.getItem('token');
+
+      // Set up AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
       const response = await fetch(`${API_BASE_URL}/customers`, {
         headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
+
       const data = await response.json();
       setCustomers(data.customers);
     } catch (err) {
-      setError('Failed to fetch customers');
+      if (err instanceof Error && err.name === 'AbortError') {
+        setError('Request timeout - server may be unavailable');
+      } else {
+        setError('Failed to fetch customers');
+      }
     }
   };
 
@@ -48,6 +61,11 @@ const CustomerManagement: React.FC = () => {
 
     try {
       const token = localStorage.getItem('token');
+
+      // Set up AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
       const response = await fetch(`${API_BASE_URL}/customers`, {
         method: 'POST',
         headers: {
@@ -55,7 +73,10 @@ const CustomerManagement: React.FC = () => {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(formData),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) throw new Error('Failed to add customer');
 
@@ -65,7 +86,11 @@ const CustomerManagement: React.FC = () => {
       fetchCustomers();
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add customer');
+      if (err instanceof Error && err.name === 'AbortError') {
+        setError('Request timeout - server may be unavailable');
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to add customer');
+      }
     }
   };
 

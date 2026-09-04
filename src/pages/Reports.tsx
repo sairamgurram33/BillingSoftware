@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../utils/apiConfig';
 
 interface ReportData {
@@ -25,9 +25,18 @@ const Reports: React.FC = () => {
   const fetchReports = async () => {
     try {
       const token = localStorage.getItem('token');
+
+      // Set up AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
       const response = await fetch(`${API_BASE_URL}/reports/dashboard`, {
         headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
+
       const data = await response.json();
       setReportData({
         totalSales: data.totalSales || 0,
@@ -37,7 +46,11 @@ const Reports: React.FC = () => {
         totalCustomers: data.totalCustomers || 0,
       });
     } catch (err) {
-      console.error('Failed to fetch reports:', err);
+      if (err instanceof Error && err.name === 'AbortError') {
+        console.error('Reports fetch timeout');
+      } else {
+        console.error('Failed to fetch reports:', err);
+      }
     }
   };
 

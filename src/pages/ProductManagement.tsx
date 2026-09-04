@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import './ProductManagement.css';
 import { API_BASE_URL } from '../utils/apiConfig';
 
@@ -44,13 +44,26 @@ const ProductManagement: React.FC = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
+
+      // Set up AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
       const response = await fetch(`${API_BASE_URL}/products`, {
         headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
+
       const data = await response.json();
       setProducts(data.products);
     } catch (err) {
-      setError('Failed to fetch products');
+      if (err instanceof Error && err.name === 'AbortError') {
+        setError('Request timeout - server may be unavailable');
+      } else {
+        setError('Failed to fetch products');
+      }
     } finally {
       setLoading(false);
     }
@@ -68,9 +81,13 @@ const ProductManagement: React.FC = () => {
 
     try {
       const token = localStorage.getItem('token');
-      
+
       if (editingId) {
         // Update existing product
+        // Set up AbortController for timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
         const response = await fetch(`${API_BASE_URL}/products/${editingId}`, {
           method: 'PUT',
           headers: {
@@ -78,7 +95,10 @@ const ProductManagement: React.FC = () => {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(formData),
+          signal: controller.signal,
         });
+
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
           throw new Error('Failed to update product');
@@ -95,7 +115,10 @@ const ProductManagement: React.FC = () => {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(formData),
+          signal: controller.signal,
         });
+
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
           throw new Error('Failed to add product');
@@ -176,15 +199,28 @@ const ProductManagement: React.FC = () => {
 
     try {
       const token = localStorage.getItem('token');
+
+      // Set up AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
       await fetch(`${API_BASE_URL}/products/${productId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
+
       setSuccess('Product deleted successfully!');
       fetchProducts();
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      setError('Failed to delete product');
+      if (err instanceof Error && err.name === 'AbortError') {
+        setError('Request timeout - server may be unavailable');
+      } else {
+        setError('Failed to delete product');
+      }
     }
   };
 

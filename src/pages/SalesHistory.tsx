@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../utils/apiConfig';
 
 interface CartItem {
@@ -51,13 +51,26 @@ const SalesHistory: React.FC = () => {
   const fetchSales = async () => {
     try {
       const token = localStorage.getItem('token');
+
+      // Set up AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
       const response = await fetch(`${API_BASE_URL}/sales`, {
         headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
+
       const data = await response.json();
       setSales(data.sales);
     } catch (err) {
-      console.error('Failed to fetch sales:', err);
+      if (err instanceof Error && err.name === 'AbortError') {
+        console.error('Sales fetch timeout');
+      } else {
+        console.error('Failed to fetch sales:', err);
+      }
     } finally {
       setLoading(false);
     }
@@ -67,10 +80,18 @@ const SalesHistory: React.FC = () => {
     try {
       setDeleting(true);
       const token = localStorage.getItem('token');
+
+      // Set up AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
       const response = await fetch(`${API_BASE_URL}/sales/${saleId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error('Failed to delete bill');
@@ -82,7 +103,11 @@ const SalesHistory: React.FC = () => {
         setSelectedBill(null);
       }
     } catch (err) {
-      alert('Error deleting bill: ' + (err instanceof Error ? err.message : 'Unknown error'));
+      if (err instanceof Error && err.name === 'AbortError') {
+        alert('Request timeout - server may be unavailable');
+      } else {
+        alert('Error deleting bill: ' + (err instanceof Error ? err.message : 'Unknown error'));
+      }
     } finally {
       setDeleting(false);
     }
@@ -254,7 +279,7 @@ const SalesHistory: React.FC = () => {
                   const shopName = 'SmartShop Hardware Store';
                   const shopPhone = shopInfo.phone;
                   const shopAddress = shopInfo.address;
-                  
+
                   const billHTML = `
                     <!DOCTYPE html>
                     <html>
@@ -282,12 +307,12 @@ const SalesHistory: React.FC = () => {
                         <p>📞 ${shopPhone}</p>
                         <p>📍 ${shopAddress}</p>
                       </div>
-                      
+
                       <div class="bill-info">
                         <p><strong>Bill Number:</strong> ${selectedBill.billNumber}</p>
                         <p><strong>Date & Time:</strong> ${new Date(selectedBill.createdAt).toLocaleString()}</p>
                       </div>
-                      
+
                       <table>
                         <thead>
                           <tr>
@@ -308,7 +333,7 @@ const SalesHistory: React.FC = () => {
                           `).join('')}
                         </tbody>
                       </table>
-                      
+
                       <div class="summary">
                         <div class="summary-row">
                           <span>Subtotal:</span>
@@ -331,12 +356,12 @@ const SalesHistory: React.FC = () => {
                           <span>₹${Number(selectedBill.totalAmount).toFixed(2)}</span>
                         </div>
                       </div>
-                      
+
                       <p style="text-align: center; margin-top: 20px; color: #666; font-size: 12px;">Thank you for your purchase!</p>
                     </body>
                     </html>
                   `;
-                  
+
                   printWindow.document.write(billHTML);
                   printWindow.document.close();
                   setTimeout(() => printWindow.print(), 250);

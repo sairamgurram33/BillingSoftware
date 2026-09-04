@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import './Settings.css';
 import { API_BASE_URL } from '../utils/apiConfig';
 
@@ -61,9 +61,17 @@ const Settings: React.FC = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
+
+      // Set up AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
       const response = await fetch(`${API_BASE_URL}/settings/shop`, {
         headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         const data = await response.json();
@@ -72,7 +80,11 @@ const Settings: React.FC = () => {
         console.error('Failed to load shop settings from backend');
       }
     } catch (error) {
-      console.error('Error loading shop settings:', error);
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.error('Shop settings load timeout');
+      } else {
+        console.error('Error loading shop settings:', error);
+      }
     } finally {
       setLoading(false);
     }
@@ -104,6 +116,11 @@ const Settings: React.FC = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
+
+      // Set up AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
       const response = await fetch(`${API_BASE_URL}/settings/shop`, {
         method: 'PUT',
         headers: {
@@ -111,7 +128,10 @@ const Settings: React.FC = () => {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(shopSettings),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         const data = await response.json();
@@ -123,9 +143,14 @@ const Settings: React.FC = () => {
         throw new Error('Failed to save shop settings');
       }
     } catch (error) {
-      console.error('Error saving shop settings:', error);
-      setMessageType('error');
-      setMessage('❌ Failed to save shop settings');
+      if (error instanceof Error && error.name === 'AbortError') {
+        setMessageType('error');
+        setMessage('❌ Request timeout - server may be unavailable');
+      } else {
+        console.error('Error saving shop settings:', error);
+        setMessageType('error');
+        setMessage('❌ Failed to save shop settings');
+      }
       setTimeout(() => setMessage(''), 3000);
     } finally {
       setLoading(false);
@@ -250,6 +275,20 @@ const Settings: React.FC = () => {
                 />
               </div>
 
+              <div className="form-group">
+                <label>UPI ID (For Dynamic QR Codes)</label>
+                <input
+                  type="text"
+                  value={shopSettings.upiId || ''}
+                  onChange={(e) => setShopSettings({ ...shopSettings, upiId: e.target.value })}
+                  placeholder="e.g., yourshop@okhdfcbank"
+                  className="form-input"
+                />
+                <p style={{ fontSize: '11px', color: '#7f8c8d', marginTop: '5px' }}>
+                  ℹ️ Dynamic UPI QR codes will be generated with the exact bill amount using this UPI ID.
+                </p>
+              </div>
+
               <button type="submit" className="btn-save btn-save-shop">
                 💾 Save Shop Settings
               </button>
@@ -337,25 +376,25 @@ const Settings: React.FC = () => {
 
             <div className="form-group">
               <label>💰 QR Code for Payment</label>
-              <div style={{ 
-                background: '#f8f9fa', 
-                border: '2px dashed #667eea', 
-                padding: '20px', 
-                borderRadius: '8px', 
+              <div style={{
+                background: '#f8f9fa',
+                border: '2px dashed #667eea',
+                padding: '20px',
+                borderRadius: '8px',
                 textAlign: 'center',
                 marginBottom: '15px'
               }}>
                 {paymentSettings.qrCodeImage ? (
                   <div>
                     <div style={{ marginBottom: '15px' }}>
-                      <img 
-                        src={paymentSettings.qrCodeImage} 
-                        alt="QR Code Preview" 
+                      <img
+                        src={paymentSettings.qrCodeImage}
+                        alt="QR Code Preview"
                         style={{ maxWidth: '150px', maxHeight: '150px', borderRadius: '8px', border: '2px solid #667eea' }}
                       />
                     </div>
                     <p style={{ color: '#27ae60', fontSize: '12px', fontWeight: 600, marginBottom: '10px' }}>✅ QR Code Loaded</p>
-                    <button 
+                    <button
                       type="button"
                       onClick={() => document.getElementById('qr-upload')?.click()}
                       style={{
@@ -371,7 +410,7 @@ const Settings: React.FC = () => {
                     >
                       📸 Change QR Code
                     </button>
-                    <button 
+                    <button
                       type="button"
                       onClick={handleRemoveQRCode}
                       style={{
@@ -392,7 +431,7 @@ const Settings: React.FC = () => {
                     <p style={{ color: '#7f8c8d', fontSize: '14px', marginBottom: '15px' }}>
                       📷 Upload your payment QR code here
                     </p>
-                    <button 
+                    <button
                       type="button"
                       onClick={() => document.getElementById('qr-upload')?.click()}
                       style={{
@@ -452,7 +491,7 @@ const Settings: React.FC = () => {
               <strong>Backend:</strong> Express.js + Node.js
             </p>
             <p style={{ marginTop: '15px', color: '#666' }}>
-              SmartShop POS is a professional Point of Sale system designed for small and medium retail shops. 
+              SmartShop POS is a professional Point of Sale system designed for small and medium retail shops.
               All your settings are saved locally and persist across sessions.
             </p>
           </div>
